@@ -416,6 +416,91 @@ where
     })
 }
 
+/// Gets the contract immutable data.
+///
+/// Traps if called from within the call export or if immutable data was never set.
+pub fn get_immutable_data() -> Result<Vec<u8>> {
+    <EnvInstance as OnInstance>::on_instance(|instance| {
+        EnvBackend::get_immutable_data(instance)
+    })
+}
+
+/// Sets the contract immutable data.
+///
+/// Only valid to call once during the constructor. Traps if called from the call
+/// export, called more than once, or if the data is empty.
+pub fn set_immutable_data(data: &[u8]) {
+    <EnvInstance as OnInstance>::on_instance(|instance| {
+        EnvBackend::set_immutable_data(instance, data)
+    })
+}
+
+/// Loads a U256 value from the call data at the given byte offset.
+///
+/// If the offset is out of bounds, returns zero. If there is not enough data
+/// at the offset, the result is right-padded with zeros.
+pub fn call_data_load(offset: u32) -> [u8; 32] {
+    <EnvInstance as OnInstance>::on_instance(|instance| {
+        EnvBackend::call_data_load(instance, offset)
+    })
+}
+
+/// EVM-style SSTORE: sets the storage entry for a fixed 256-bit key/value pair.
+///
+/// If the value is all zeros, the key is cleared (deleted).
+/// Returns the size of the pre-existing value at the key, if any.
+pub fn set_storage_or_clear(key: &[u8; 32], value: &[u8; 32]) -> Option<u32> {
+    <EnvInstance as OnInstance>::on_instance(|instance| {
+        EnvBackend::set_storage_or_clear(instance, key, value)
+    })
+}
+
+/// EVM-style SLOAD: retrieves the storage entry for a fixed 256-bit key.
+///
+/// If the key does not exist, returns 32 zero bytes.
+pub fn get_storage_or_zero(key: &[u8; 32]) -> [u8; 32] {
+    <EnvInstance as OnInstance>::on_instance(|instance| {
+        EnvBackend::get_storage_or_zero(instance, key)
+    })
+}
+
+/// Reverts execution and consumes all remaining gas, akin to the EVM `INVALID` opcode.
+pub fn consume_all_gas() -> ! {
+    <EnvInstance as OnInstance>::on_instance(|instance| {
+        EnvBackend::consume_all_gas(instance)
+    })
+}
+
+/// Invokes a contract message using EVM-compatible one-dimensional gas and returns its
+/// result.
+pub fn invoke_contract_evm<E, Args, R, Abi>(
+    params: &CallParams<E, Call, Args, R, Abi>,
+) -> Result<ink_primitives::MessageResult<R>>
+where
+    E: Environment,
+    Args: EncodeArgsWith<Abi>,
+    R: DecodeMessageResult<Abi>,
+{
+    <EnvInstance as OnInstance>::on_instance(|instance| {
+        TypedEnvBackend::invoke_contract_evm::<E, Args, R, Abi>(instance, params)
+    })
+}
+
+/// Invokes a contract message via delegate call using EVM-compatible one-dimensional gas
+/// and returns its result.
+pub fn invoke_contract_delegate_evm<E, Args, R, Abi>(
+    params: &CallParams<E, DelegateCall, Args, R, Abi>,
+) -> Result<ink_primitives::MessageResult<R>>
+where
+    E: Environment,
+    Args: EncodeArgsWith<Abi>,
+    R: DecodeMessageResult<Abi>,
+{
+    <EnvInstance as OnInstance>::on_instance(|instance| {
+        TypedEnvBackend::invoke_contract_delegate_evm::<E, Args, R, Abi>(instance, params)
+    })
+}
+
 /// Invokes a contract message and returns its result.
 ///
 /// # Note

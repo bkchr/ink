@@ -252,6 +252,38 @@ pub trait EnvBackend {
 
     /// Returns the size of the buffer that is remaining in the backend.
     fn remaining_buffer(&mut self) -> usize;
+
+    /// Gets the contract immutable data.
+    ///
+    /// Traps if called from within the deploy export or if immutable data was never set.
+    fn get_immutable_data(&mut self) -> Result<Vec<u8>>;
+
+    /// Sets the contract immutable data.
+    ///
+    /// Only valid to call once during the constructor. Traps if called from the call
+    /// export, called more than once, or if the data is empty.
+    fn set_immutable_data(&mut self, data: &[u8]);
+
+    /// Loads a U256 value from the call data at the given byte offset.
+    ///
+    /// If the offset is out of bounds, returns zero. If there is not enough data
+    /// at the offset, the result is right-padded with zeros.
+    /// The returned value is a little-endian U256.
+    fn call_data_load(&mut self, offset: u32) -> [u8; 32];
+
+    /// Sets the storage entry for a fixed 256-bit key with a fixed 256-bit value.
+    ///
+    /// If the value is all zeros, the key is cleared (deleted), mimicking EVM SSTORE.
+    fn set_storage_or_clear(&mut self, key: &[u8; 32], value: &[u8; 32]) -> Option<u32>;
+
+    /// Retrieves the storage entry for a fixed 256-bit key.
+    ///
+    /// If the key does not exist, returns 32 zero bytes, mimicking EVM SLOAD.
+    fn get_storage_or_zero(&mut self, key: &[u8; 32]) -> [u8; 32];
+
+    /// Reverts execution and consumes all remaining gas, akin to the EVM `INVALID`
+    /// opcode.
+    fn consume_all_gas(&mut self) -> !;
 }
 
 /// Environmental contract functionality.
@@ -494,6 +526,31 @@ pub trait TypedEnvBackend: EnvBackend {
             crate::reflect::ContractConstructorDecoder,
         Args: EncodeArgsWith<Abi>,
         R: ConstructorReturnType<ContractRef, Abi>;
+
+    /// Calls a contract using EVM-compatible one-dimensional gas.
+    ///
+    /// Adds the EVM gas stipend for non-zero value calls.
+    /// If `gas` is `u64::MAX`, the call runs with uncapped limits.
+    fn invoke_contract_evm<E, Args, R, Abi>(
+        &mut self,
+        params: &CallParams<E, Call, Args, R, Abi>,
+    ) -> Result<ink_primitives::MessageResult<R>>
+    where
+        E: Environment,
+        Args: EncodeArgsWith<Abi>,
+        R: DecodeMessageResult<Abi>;
+
+    /// Delegate-calls a contract using EVM-compatible one-dimensional gas.
+    ///
+    /// If `gas` is `u64::MAX`, the call runs with uncapped limits.
+    fn invoke_contract_delegate_evm<E, Args, R, Abi>(
+        &mut self,
+        params: &CallParams<E, DelegateCall, Args, R, Abi>,
+    ) -> Result<ink_primitives::MessageResult<R>>
+    where
+        E: Environment,
+        Args: EncodeArgsWith<Abi>,
+        R: DecodeMessageResult<Abi>;
 
     /// Terminates a smart contract.
     ///

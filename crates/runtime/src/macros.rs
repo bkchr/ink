@@ -329,13 +329,14 @@ mod construct_runtime {
         type WeightInfo = ();
         type CallbackHandle = $crate::pallet_assets::AutoIncAssetId<$runtime, TrustBackedAssetsInstance>;
         type RemoveItemsLimit = ConstU32<1000>;
+        type ReserveData = ();
     }
 
     impl $crate::pallet_transaction_payment::Config for $runtime {
         type RuntimeEvent = RuntimeEvent;
         type OnChargeTransaction = FungibleAdapter<Balances, ()>;
         type OperationalFeeMultiplier = ConstU8<5>;
-        type WeightToFee = $crate::pallet_revive::evm::fees::BlockRatioFee<1, 1, Self>;
+        type WeightToFee = $crate::pallet_revive::evm::fees::BlockRatioFee<1, 1, Self, Balance>;
         type LengthToFee = IdentityFee<Balance>;
         type FeeMultiplierUpdate = ();
         type WeightInfo = $crate::pallet_transaction_payment::weights::SubstrateWeight<$runtime>;
@@ -393,6 +394,7 @@ mod construct_runtime {
         type FeeInfo = ();
         type MaxEthExtrinsicWeight = MaxEthExtrinsicWeight;
         type DebugEnabled = ConstBool<false>;
+        type GasScale = ConstU32<10>;
     }
 
     /// Default initial balance for the default account.

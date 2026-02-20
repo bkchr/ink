@@ -24,6 +24,7 @@ use pallet_revive::{
     Code,
     CodeUploadResult,
     ExecConfig,
+    TransactionLimits,
     evm::{
         Tracer,
         TracerType,
@@ -209,8 +210,10 @@ where
             pallet_revive::Pallet::<Self::T>::bare_instantiate(
                 origin,
                 balance_to_evm_value::<Self::T>(value),
-                gas_limit,
-                storage_deposit_limit,
+                TransactionLimits::WeightAndDeposit {
+                    weight_limit: gas_limit,
+                    deposit_limit: storage_deposit_limit,
+                },
                 Code::Upload(contract_bytes),
                 data,
                 salt,
@@ -218,6 +221,8 @@ where
                     bump_nonce: true,
                     collect_deposit_from_hold: None,
                     effective_gas_price: None,
+                    is_dry_run: None,
+                    mock_handler: None,
                 },
             )
         })
@@ -237,8 +242,10 @@ where
             pallet_revive::Pallet::<Self::T>::bare_instantiate(
                 origin,
                 balance_to_evm_value::<Self::T>(value),
-                gas_limit,
-                storage_deposit_limit,
+                TransactionLimits::WeightAndDeposit {
+                    weight_limit: gas_limit,
+                    deposit_limit: storage_deposit_limit,
+                },
                 Code::Existing(code_hash),
                 data,
                 salt,
@@ -246,6 +253,8 @@ where
                     bump_nonce: true,
                     collect_deposit_from_hold: None,
                     effective_gas_price: None,
+                    is_dry_run: None,
+                    mock_handler: None,
                 },
             )
         })
@@ -280,13 +289,17 @@ where
                 origin,
                 address,
                 balance_to_evm_value::<Self::T>(value),
-                gas_limit,
-                storage_deposit_limit,
+                TransactionLimits::WeightAndDeposit {
+                    weight_limit: gas_limit,
+                    deposit_limit: storage_deposit_limit,
+                },
                 data,
                 ExecConfig {
                     bump_nonce: true,
                     collect_deposit_from_hold: None,
                     effective_gas_price: None,
+                    is_dry_run: None,
+                    mock_handler: None,
                 },
             )
         })

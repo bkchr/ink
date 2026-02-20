@@ -461,12 +461,12 @@ where
         let result = ContractResult::<InstantiateReturnValue, E::Balance> {
             // TODO: mismatch in dependencies
             weight_consumed: Weight::from_parts(
-                dry_run_result.gas_consumed.ref_time(),
-                dry_run_result.gas_consumed.proof_size(),
+                dry_run_result.weight_consumed.ref_time(),
+                dry_run_result.weight_consumed.proof_size(),
             ),
             weight_required: Weight::from_parts(
-                dry_run_result.gas_required.ref_time(),
-                dry_run_result.gas_required.proof_size(),
+                dry_run_result.weight_required.ref_time(),
+                dry_run_result.weight_required.proof_size(),
             ),
             storage_deposit: to_revive_storage_deposit(
                 dry_run_result.storage_deposit.clone(),
@@ -679,12 +679,12 @@ where
             exec_result: ContractExecResultFor::<E> {
                 // TODO: mismatch in dependencies
                 weight_consumed: Weight::from_parts(
-                    result.gas_consumed.ref_time(),
-                    result.gas_consumed.proof_size(),
+                    result.weight_consumed.ref_time(),
+                    result.weight_consumed.proof_size(),
                 ),
                 weight_required: Weight::from_parts(
-                    result.gas_required.ref_time(),
-                    result.gas_required.proof_size(),
+                    result.weight_required.ref_time(),
+                    result.weight_required.proof_size(),
                 ),
                 storage_deposit: to_revive_storage_deposit(
                     result.storage_deposit.clone(),

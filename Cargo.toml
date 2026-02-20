@@ -38,11 +38,11 @@ rust-version = "1.88"
 arrayref = { version = "0.3" }
 array-init = { version = "2.0", default-features = false }
 blake2 = { version = "0.10" }
-cargo_metadata = { version = "0.22.0" }
+cargo_metadata = { version = "0.23.1" }
 cfg-if = { version = "1.0" }
 contract-build = { version = "6.0.0-beta.2" }
-darling = { version = "0.21.3" }
-derive_more = { version = "2.0.1", default-features = false }
+darling = { version = "0.23.0" }
+derive_more = { version = "2.1.1", default-features = false }
 either = { version = "1.13", default-features = false }
 funty = { version = "2.0.0" }
 heck = { version = "0.5.0" }
@@ -57,51 +57,60 @@ proc-macro2 = { version = "1" }
 quickcheck = { version = "1" }
 quickcheck_macros = { version = "1" }
 quote = { version = "1" }
-scale = { package = "parity-scale-codec", version = "3.7.4", default-features = false, features = ["derive"] }
+scale = { package = "parity-scale-codec", version = "3.7.5", default-features = false, features = ["derive"] }
 scale-decode = { version = "0.16.2", default-features = false }
 scale-encode = { version = "0.10.0", default-features = false }
 scale-info = { version = "2.11", default-features = false }
 schemars = { version = "0.8" }
 secp256k1 = { version = "0.31.1" }
-serde = { version = "1.0.215", default-features = false }
-serde_json = { version = "1.0.145" }
+serde = { version = "1.0.228", default-features = false }
+serde_json = { version = "1.0.149" }
 sha2 = { version = "0.10" }
 sha3 = { version = "0.10" }
 static_assertions = { version = "1.1" }
-subxt = { version = "0.44.0" }
-subxt-metadata = { version = "0.44.0" }
-subxt-signer = { version = "0.44.0" }
+subxt = { version = "0.44.2" }
+subxt-metadata = { version = "0.44.2" }
+subxt-signer = { version = "0.44.2" }
 syn = { version = "2" }
 synstructure = { version = "0.13.1" }
-thiserror = { version = "2.0.11" }
-tokio = { version = "1.47.1" }
-tracing = { version = "0.1.43" }
-tracing-subscriber = { version = "0.3.20" }
-trybuild = { version = "1.0.110" }
+thiserror = { version = "2.0.18" }
+tokio = { version = "1.49.0" }
+tracing = { version = "0.1.44" }
+tracing-subscriber = { version = "0.3.22" }
+trybuild = { version = "1.0.116" }
 which = { version = "8.0.0" }
 xxhash-rust = { version = "0.8" }
 const_env = { version = "0.1.5" }
 const-hex = { version = "1.17.0", default-features = false }
 
 # Substrate dependencies
-frame-metadata = { version = "23.0.0", default-features = false }
-frame-system = { version = "42.0.0", default-features = false }
-frame-support = { version = "42.0.0", default-features = false }
+frame-metadata = { version = "23.0.1", default-features = false }
+frame-system = { version = "45.0.0", default-features = false }
+frame-support = { version = "45.1.0", default-features = false }
 
-pallet-revive-uapi = { version = "0.8.0", default-features = false, features = ["unstable-hostfn"] }
+pallet-revive-uapi = { version = "0.10.1", default-features = false }
 
-sp-core = { version = "38.0.0", default-features = false }
-sp-keyring = { version = "43.0.0", default-features = false }
-sp-runtime = { version = "43.0.0" }
-sp-weights = { version = "33.0.0", default-features = false }
-xcm = { package = "staging-xcm", version = "18.0.0", default-features = false }
+sp-core = { version = "39.0.0", default-features = false }
+sp-externalities = { version = "0.31.0", default-features = false }
+sp-io = { version = "44.0.0", default-features = false }
+sp-keyring = { version = "45.0.0", default-features = false }
+sp-runtime = { version = "45.0.0", default-features = false }
+sp-weights = { version = "33.2.0", default-features = false }
+xcm = { package = "staging-xcm", version = "21.0.0", default-features = false }
+
+pallet-assets = { version = "48.1.0", default-features = false }
+pallet-assets-precompiles = { version = "0.4.1", default-features = false }
+pallet-balances = { version = "46.0.0", default-features = false }
+pallet-revive = { version = "0.12.2", default-features = false }
+pallet-timestamp = { version = "44.0.0", default-features = false }
+pallet-transaction-payment = { version = "45.0.0", default-features = false }
 
 # PolkaVM dependencies
-polkavm-derive = { version = "0.30.0", default-features = false }
+polkavm-derive = { version = "0.31.0", default-features = false }
 
 # Solidity dependencies
-alloy-sol-types = { version = "1.4.1", default-features = false }
-const_format = { version = "0.2.34", features = ["fmt"] }
+alloy-sol-types = { version = "1.5.7", default-features = false }
+const_format = { version = "0.2.35", features = ["fmt"] }
 keccak-const = "0.2.0"
 impl-trait-for-tuples = "0.2.3"
 

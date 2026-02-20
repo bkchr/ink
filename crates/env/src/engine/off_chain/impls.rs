@@ -560,6 +560,34 @@ impl EnvBackend for EnvInstance {
             .set_code_hash(&self.engine.get_callee(), code_hash);
         Ok(())
     }
+
+    fn get_immutable_data(&mut self) -> Result<Vec<u8>> {
+        unimplemented!("the off-chain env does not implement `get_immutable_data`")
+    }
+
+    fn set_immutable_data(&mut self, _data: &[u8]) {
+        unimplemented!("the off-chain env does not implement `set_immutable_data`")
+    }
+
+    fn call_data_load(&mut self, _offset: u32) -> [u8; 32] {
+        unimplemented!("the off-chain env does not implement `call_data_load`")
+    }
+
+    fn set_storage_or_clear(
+        &mut self,
+        _key: &[u8; 32],
+        _value: &[u8; 32],
+    ) -> Option<u32> {
+        unimplemented!("the off-chain env does not implement `set_storage_or_clear`")
+    }
+
+    fn get_storage_or_zero(&mut self, _key: &[u8; 32]) -> [u8; 32] {
+        unimplemented!("the off-chain env does not implement `get_storage_or_zero`")
+    }
+
+    fn consume_all_gas(&mut self) -> ! {
+        unimplemented!("the off-chain env does not implement `consume_all_gas`")
+    }
 }
 
 impl TypedEnvBackend for EnvInstance {
@@ -718,6 +746,52 @@ impl TypedEnvBackend for EnvInstance {
         R: DecodeMessageResult<Abi>,
     {
         let _addr = params.address(); // todo remove
+        let call_flags = params.call_flags().bits();
+        let input = params.exec_input().encode();
+
+        invoke_contract_impl_delegate::<R, Abi>(
+            self,
+            None,
+            call_flags,
+            None,
+            *params.address(),
+            input,
+        )
+    }
+
+    fn invoke_contract_evm<E, Args, R, Abi>(
+        &mut self,
+        params: &CallParams<E, Call, Args, R, Abi>,
+    ) -> Result<ink_primitives::MessageResult<R>>
+    where
+        E: Environment,
+        Args: EncodeArgsWith<Abi>,
+        R: DecodeMessageResult<Abi>,
+    {
+        let call_flags = params.call_flags().bits();
+        let transferred_value = params.transferred_value();
+        let input = params.exec_input().encode();
+        let callee_account = params.callee();
+
+        invoke_contract_impl::<R, Abi>(
+            self,
+            None,
+            call_flags,
+            Some(transferred_value),
+            *callee_account,
+            input,
+        )
+    }
+
+    fn invoke_contract_delegate_evm<E, Args, R, Abi>(
+        &mut self,
+        params: &CallParams<E, DelegateCall, Args, R, Abi>,
+    ) -> Result<ink_primitives::MessageResult<R>>
+    where
+        E: Environment,
+        Args: EncodeArgsWith<Abi>,
+        R: DecodeMessageResult<Abi>,
+    {
         let call_flags = params.call_flags().bits();
         let input = params.exec_input().encode();
 

@@ -973,26 +973,62 @@ impl EnvBackend for EnvInstance {
     #[cfg(feature = "unstable-hostfn")]
     fn ecdsa_to_eth_address(
         &mut self,
-        pubkey: &[u8; 33],
-        output: &mut [u8; 20],
+        _pubkey: &[u8; 33],
+        _output: &mut [u8; 20],
     ) -> Result<()> {
-        ext::ecdsa_to_eth_address(pubkey, output).map_err(Into::into)
+        unimplemented!(
+            "ecdsa_to_eth_address was removed from pallet-revive uapi and is no longer supported"
+        )
     }
 
     #[cfg(feature = "unstable-hostfn")]
     fn sr25519_verify(
         &mut self,
-        signature: &[u8; 64],
-        message: &[u8],
-        pub_key: &[u8; 32],
+        _signature: &[u8; 64],
+        _message: &[u8],
+        _pub_key: &[u8; 32],
     ) -> Result<()> {
-        ext::sr25519_verify(signature, message, pub_key).map_err(Into::into)
+        unimplemented!(
+            "sr25519_verify was removed from pallet-revive uapi and is no longer supported"
+        )
     }
 
     #[cfg(feature = "unstable-hostfn")]
-    fn set_code_hash(&mut self, code_hash: &H256) -> Result<()> {
-        ext::set_code_hash(code_hash.as_fixed_bytes());
-        Ok(()) // todo
+    fn set_code_hash(&mut self, _code_hash: &H256) -> Result<()> {
+        unimplemented!(
+            "set_code_hash was removed from pallet-revive uapi and is no longer supported"
+        )
+    }
+
+    fn get_immutable_data(&mut self) -> Result<Vec<u8>> {
+        let mut scope = self.scoped_buffer();
+        let output = &mut scope.take_rest();
+        ext::get_immutable_data(output);
+        Ok(output.to_vec())
+    }
+
+    fn set_immutable_data(&mut self, data: &[u8]) {
+        ext::set_immutable_data(data);
+    }
+
+    fn call_data_load(&mut self, offset: u32) -> [u8; 32] {
+        let mut output = [0u8; 32];
+        ext::call_data_load(&mut output, offset);
+        output
+    }
+
+    fn set_storage_or_clear(&mut self, key: &[u8; 32], value: &[u8; 32]) -> Option<u32> {
+        ext::set_storage_or_clear(STORAGE_FLAGS, key, value)
+    }
+
+    fn get_storage_or_zero(&mut self, key: &[u8; 32]) -> [u8; 32] {
+        let mut output = [0u8; 32];
+        ext::get_storage_or_zero(STORAGE_FLAGS, key, &mut output);
+        output
+    }
+
+    fn consume_all_gas(&mut self) -> ! {
+        ext::consume_all_gas()
     }
 }
 
@@ -1013,7 +1049,7 @@ impl TypedEnvBackend for EnvInstance {
     }
 
     fn gas_left(&mut self) -> u64 {
-        ext::ref_time_left()
+        ext::gas_left()
     }
 
     fn call_data_size(&mut self) -> u64 {
@@ -1277,6 +1313,75 @@ impl TypedEnvBackend for EnvInstance {
         }
     }
 
+    fn invoke_contract_evm<E, Args, R, Abi>(
+        &mut self,
+        params: &CallParams<E, Call, Args, R, Abi>,
+    ) -> Result<ink_primitives::MessageResult<R>>
+    where
+        E: Environment,
+        Args: EncodeArgsWith<Abi>,
+        R: DecodeMessageResult<Abi>,
+    {
+        let mut scope = self.scoped_buffer();
+        let gas = params.ref_time_limit();
+        let enc_callee = params.callee().as_fixed_bytes();
+        let enc_transferred_value = params.transferred_value().to_little_endian();
+        let call_flags = params.call_flags();
+        let enc_input = if !call_flags.contains(CallFlags::FORWARD_INPUT)
+            && !call_flags.contains(CallFlags::CLONE_INPUT)
+        {
+            scope.take_encoded_with(|buffer| params.exec_input().encode_to_slice(buffer))
+        } else {
+            &mut []
+        };
+        let output = &mut scope.take_rest();
+        let flags = params.call_flags();
+        let call_result = ext::call_evm(
+            *flags,
+            enc_callee,
+            gas,
+            &enc_transferred_value,
+            enc_input,
+            Some(output),
+        );
+        match call_result {
+            Ok(()) => R::decode_output(output, false),
+            Err(ReturnErrorCode::CalleeReverted) => R::decode_output(output, true),
+            Err(actual_error) => Err(actual_error.into()),
+        }
+    }
+
+    fn invoke_contract_delegate_evm<E, Args, R, Abi>(
+        &mut self,
+        params: &CallParams<E, DelegateCall, Args, R, Abi>,
+    ) -> Result<ink_primitives::MessageResult<R>>
+    where
+        E: Environment,
+        Args: EncodeArgsWith<Abi>,
+        R: DecodeMessageResult<Abi>,
+    {
+        let mut scope = self.scoped_buffer();
+        let call_flags = params.call_flags();
+        let enc_input = if !call_flags.contains(CallFlags::FORWARD_INPUT)
+            && !call_flags.contains(CallFlags::CLONE_INPUT)
+        {
+            scope.take_encoded_with(|buffer| params.exec_input().encode_to_slice(buffer))
+        } else {
+            &mut []
+        };
+        let output = &mut scope.take_rest();
+        let flags = params.call_flags();
+        let enc_address: [u8; 20] = params.address().0;
+        let gas = params.ref_time_limit();
+        let call_result =
+            ext::delegate_call_evm(*flags, &enc_address, gas, enc_input, Some(output));
+        match call_result {
+            Ok(()) => R::decode_output(output, false),
+            Err(ReturnErrorCode::CalleeReverted) => R::decode_output(output, true),
+            Err(actual_error) => Err(actual_error.into()),
+        }
+    }
+
     fn instantiate_contract<E, ContractRef, Args, RetType, Abi>(
         &mut self,
         params: &CreateParams<E, ContractRef, LimitParamsV2, Args, RetType, Abi>,
@@ -1367,9 +1472,10 @@ impl TypedEnvBackend for EnvInstance {
     }
 
     fn weight_to_fee(&mut self, gas: u64) -> U256 {
-        let mut u256 = [0u8; 32];
-        ext::weight_to_fee(gas, gas, &mut u256);
-        U256::from_le_bytes(u256)
+        // `weight_to_fee` was removed from pallet-revive uapi.
+        // We approximate by using `gas_price * gas`.
+        let gas_price = ext::gas_price();
+        U256::from(gas_price) * U256::from(gas)
     }
 
     fn is_contract(&mut self, addr: &Address) -> bool {
